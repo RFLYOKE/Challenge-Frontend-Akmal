@@ -3,11 +3,18 @@ import { useLocation, useNavigate } from "react-router-dom";
 const Result = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { results = [], totalQuestions = 0 } = location.state || {};
+  const { answers = [], score = 0, timeTaken = 0 } = location.state || {};
 
-  const correctAnswers = results.filter((r) => r.isCorrect).length;
-  const wrongAnswers = results.length - correctAnswers;
+  const totalQuestions = answers.length;
+  const correctAnswers = score;
+  const wrongAnswers = totalQuestions - correctAnswers;
   const scorePercentage = Math.round((correctAnswers / totalQuestions) * 100);
+
+  const formatTime = (seconds) => {
+    const m = String(Math.floor(seconds / 60)).padStart(2, "0");
+    const s = String(seconds % 60).padStart(2, "0");
+    return `${m}:${s}`;
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-indigo-50 px-4">
@@ -20,7 +27,7 @@ const Result = () => {
             <span className="font-semibold">{totalQuestions}</span>
           </p>
           <p>
-            Answered: <span className="font-semibold">{results.length}</span>
+            Answered: <span className="font-semibold">{answers.length}</span>
           </p>
           <p>
             Correct:{" "}
@@ -31,6 +38,10 @@ const Result = () => {
           <p>
             Wrong:{" "}
             <span className="text-red-600 font-semibold">{wrongAnswers}</span>
+          </p>
+          <p>
+            Time Taken:{" "}
+            <span className="font-semibold">{formatTime(timeTaken)}</span>
           </p>
           <p className="text-xl font-bold mt-4">
             Score: <span className="text-indigo-700">{scorePercentage}%</span>

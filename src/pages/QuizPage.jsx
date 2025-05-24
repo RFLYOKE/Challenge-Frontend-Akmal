@@ -12,9 +12,24 @@ const QuizPage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch(Endpoint.getQuestions)
-      .then((res) => res.json())
-      .then((data) => {
+    const fetchQuestions = async (retryCount = 3) => {
+      try {
+        const res = await fetch(Endpoint.getQuestions);
+        if (res.status === 429) {
+          if (retryCount > 0) {
+            console.warn("Rate limited. Retrying in 2 seconds...");
+            setTimeout(() => fetchQuestions(retryCount - 1), 2000);
+          } else {
+            throw new Error("Too many requests. Please try again later.");
+          }
+          return;
+        }
+
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        const data = await res.json();
+
+        if (!data.results) throw new Error("No results found in API response");
+
         const formatted = data.results.map((q) => {
           const options = [...q.incorrect_answers];
           const randIdx = Math.floor(Math.random() * (options.length + 1));
@@ -25,12 +40,18 @@ const QuizPage = () => {
             correct_answer: q.correct_answer,
           };
         });
-        setQuestions(formatted);
-        setLoading(false);
-      })
-      .catch((err) => console.error("Failed to fetch questions", err));
-  }, []);
 
+        setQuestions(formatted);
+      } catch (err) {
+        console.error("Failed to fetch questions:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchQuestions();
+  }, []);
+  
   useEffect(() => {
     const interval = setInterval(() => {
       setTimeLeft((prev) => {
@@ -45,6 +66,13 @@ const QuizPage = () => {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    const savedAnswers = localStorage.getItem("quiz_answers");
+    if (savedAnswers) {
+      setAnswers(JSON.parse(savedAnswers));
+    }
+  }, []);  
+
   const handleNext = () => {
     if (currentQuestion < questions.length - 1) {
       setCurrentQuestion((prev) => prev + 1);
@@ -58,6 +86,28 @@ const QuizPage = () => {
       setSelectedOption(null);
     }
   };
+
+  const handleFinish = () => {
+    // Simpan ke localStorage sebelum submit
+    localStorage.setItem("quiz_answers", JSON.stringify(answers));
+
+    // Hitung skor
+    const score = answers.filter((a) => a?.isCorrect).length;
+
+    // Navigasi ke halaman hasil tanpa submit ke API
+    localStorage.removeItem("quiz_answers");
+    navigate("/result", {
+      state: { answers, score, timeTaken: 60 * 60 - timeLeft },
+    });
+  };
+
+  useEffect(() => {
+    if (answers[currentQuestion]) {
+      setSelectedOption(answers[currentQuestion].selectedAnswer);
+    } else {
+      setSelectedOption(null);
+    }
+  }, [currentQuestion, answers]);  
 
   const formatTime = (seconds) => {
     const m = String(Math.floor(seconds / 60)).padStart(2, "0");
@@ -113,6 +163,12 @@ const QuizPage = () => {
                         correctAnswer: question.correct_answer,
                         isCorrect,
                       };
+
+                      localStorage.setItem(
+                        "quiz_answers",
+                        JSON.stringify(newAnswers)
+                      );
+
                       return newAnswers;
                     });
                   }}
@@ -134,9 +190,7 @@ const QuizPage = () => {
 
             {currentQuestion === questions.length - 1 ? (
               <button
-                onClick={() => {
-                  navigate("/result", { state: { answers } });
-                }}
+                onClick={handleFinish}
                 className="px-6 py-3 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-500 transition"
               >
                 Finish Attempt

@@ -27,7 +27,7 @@ const Home = () => {
     <div className="min-h-screen flex items-center justify-center bg-indigo-50">
       <div className="bg-white rounded-3xl shadow-lg p-8 w-[90%] max-w-md text-center">
         <div className="flex justify-center mb-2">
-          <img src={infoIcon} alt="" className="w-32"/>
+          <img src={infoIcon} alt="" className="w-32" />
         </div>
 
         <h1 className="text-2xl font-bold text-gray-800 mb-2">
@@ -53,7 +53,12 @@ const Home = () => {
 
         <button
           onClick={() => navigate("/quiz")}
-          className="mt-8 w-full py-3 bg-violet-600 text-white font-semibold rounded-lg hover:bg-violet-500 transition"
+          disabled={!checked.every(Boolean)}
+          className={`mt-8 w-full py-3 font-semibold rounded-lg transition ${
+            checked.every(Boolean)
+              ? "bg-violet-600 text-white hover:bg-violet-500"
+              : "bg-gray-300 text-gray-500 cursor-not-allowed"
+          }`}
         >
           Start Quiz
         </button>
