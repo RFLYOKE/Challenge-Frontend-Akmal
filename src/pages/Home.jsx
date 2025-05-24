@@ -26,7 +26,7 @@ const Home = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-indigo-50">
       <div className="bg-white rounded-3xl shadow-lg p-8 w-[90%] max-w-md text-center">
-        <div className="flex justify-center mb-4">
+        <div className="flex justify-center mb-2">
           <img src={infoIcon} alt="" className="w-32"/>
         </div>
 
