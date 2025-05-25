@@ -3,7 +3,7 @@ import App from "../App";
 import FormAuth from "../layouts/FormAuth";
 import Home from "../pages/Home";
 import QuizPage from "../pages/QuizPage";
-import Result from "../components/Result";
+import Result from "../pages/Result";
 
 export const router = createBrowserRouter([
   {

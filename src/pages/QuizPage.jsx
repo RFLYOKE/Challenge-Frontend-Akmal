@@ -12,13 +12,21 @@ const QuizPage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    let didCancel = false;
+    const controller = new AbortController();
+
     const fetchQuestions = async (retryCount = 3) => {
       try {
-        const res = await fetch(Endpoint.getQuestions);
+        const res = await fetch(Endpoint.getQuestions, {
+          signal: controller.signal,
+        });
+
         if (res.status === 429) {
           if (retryCount > 0) {
             console.warn("Rate limited. Retrying in 2 seconds...");
-            setTimeout(() => fetchQuestions(retryCount - 1), 2000);
+            setTimeout(() => {
+              if (!didCancel) fetchQuestions(retryCount - 1);
+            }, 2000);
           } else {
             throw new Error("Too many requests. Please try again later.");
           }
@@ -41,17 +49,28 @@ const QuizPage = () => {
           };
         });
 
-        setQuestions(formatted);
+        if (!didCancel) {
+          setQuestions(formatted);
+          setLoading(false);
+        }
       } catch (err) {
-        console.error("Failed to fetch questions:", err);
-      } finally {
-        setLoading(false);
+        if (err.name === "AbortError") {
+          console.log("Fetch aborted");
+        } else {
+          console.error("Failed to fetch questions:", err);
+          setLoading(false);
+        }
       }
     };
 
     fetchQuestions();
+
+    return () => {
+      didCancel = true;
+      controller.abort(); // Abort request on cleanup
+    };
   }, []);
-  
+
   useEffect(() => {
     const interval = setInterval(() => {
       setTimeLeft((prev) => {
@@ -71,7 +90,7 @@ const QuizPage = () => {
     if (savedAnswers) {
       setAnswers(JSON.parse(savedAnswers));
     }
-  }, []);  
+  }, []);
 
   const handleNext = () => {
     if (currentQuestion < questions.length - 1) {
@@ -107,7 +126,7 @@ const QuizPage = () => {
     } else {
       setSelectedOption(null);
     }
-  }, [currentQuestion, answers]);  
+  }, [currentQuestion, answers]);
 
   const formatTime = (seconds) => {
     const m = String(Math.floor(seconds / 60)).padStart(2, "0");
