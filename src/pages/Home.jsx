@@ -8,7 +8,7 @@ const Home = () => {
   const instructions = [
     "You will get 10 multiple-choice questions.",
     "Each question has only one correct answer.",
-    "You have 30 seconds to answer each question.",
+    "You have 6 minutes to answer each question.",
     "Once you answer or time runs out, you can't go back.",
     "Try to get the highest score!",
   ];
